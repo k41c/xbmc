@@ -676,6 +676,10 @@ class _AmazonPlayer(xbmc.Player):
                     Log('%sUpdated %sid(%s) with: pos(%s) total(%s) playcount(%s)' % (res, dbtype, self.dbid, self.video_lastpos,
                                                                                       self.video_totaltime, self.watched))
                 self.saveResumePoint()
+                
+    def saveActPosition(self):
+      if self.running:
+        if self.video_lastpos > 0 and self.video_totaltime > 0:
 
     def getTimes(self, msg):
         while self.video_totaltime <= 0:
@@ -684,6 +688,18 @@ class _AmazonPlayer(xbmc.Player):
                 self.video_totaltime = self.getTotalTime()
                 self.video_lastpos = self.getTime()
         Log('%s: %s/%s' % (msg, self.video_lastpos, self.video_totaltime))
+        if self.video_lastpos > 180 and not g.UsePrimeVideo:
+                    g.amz.updateRecents(self.asin)
+                if self.dbid and g.KodiK:
+                    dbtype = _getListItem('DBTYPE')
+                    params = {'%sid' % dbtype: self.dbid,
+                              'resume': {'position': 0 if self.watched else self.video_lastpos,
+                                         'total': self.video_totaltime},
+                              'playcount': self.watched}
+                    res = '' if 'OK' in jsonRPC('VideoLibrary.Set%sDetails' % dbtype, '', params) else 'NOT '
+                    Log('%sUpdated %sid(%s) with: pos(%s) total(%s) playcount(%s)' % (res, dbtype, self.dbid, self.video_lastpos,
+                                                                                      self.video_totaltime, self.watched))
+                self.saveResumePoint()
 
 
 class _SkipButton(xbmcgui.WindowDialog):
